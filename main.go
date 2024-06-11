@@ -3,9 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"sort"
 )
+
+type Config struct {
+	PackSizes []int `json:"packSizes"`
+}
 
 type Order struct {
 	ItemsOrdered int `json:"items_ordered"`
@@ -16,12 +22,37 @@ type Pack struct {
 	Count int `json:"count"`
 }
 
-var packSizes = []int{5000, 2000, 1000, 500, 250}
+var packSizes []int
 
 func main() {
+	loadConfig()
+
 	http.HandleFunc("/calculate-packs", calculatePacksHandler)
 	fmt.Println("Server started at :8080")
 	http.ListenAndServe(":8080", nil)
+}
+
+func loadConfig() {
+	file, err := os.Open("packSizeConfig.json")
+	if err != nil {
+		fmt.Println("Error opening config file:", err)
+		return
+	}
+	defer file.Close()
+
+	byteValue, _ := ioutil.ReadAll(file)
+
+	var config Config
+	if err := json.Unmarshal(byteValue, &config); err != nil {
+		fmt.Println("Error parsing config file:", err)
+		return
+	}
+
+	packSizes = config.PackSizes
+	if len(packSizes) == 0 {
+		fmt.Println("No pack sizes defined in config file")
+		os.Exit(1)
+	}
 }
 
 func calculatePacksHandler(w http.ResponseWriter, r *http.Request) {
