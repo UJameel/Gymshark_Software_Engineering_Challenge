@@ -54,12 +54,11 @@
             }
             if (action === 'add' && response.message === "Pack size added successfully") {
                 updatePackSizesList();
-                form.reset();
             }
             if (action === 'remove' && response.message === "Pack size removed successfully") {
                 updatePackSizesList();
-                form.reset();
             }
+            form.reset(); // Always reset the form
         }
 
         function handleSubmit(form, event, action) {

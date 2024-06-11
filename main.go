@@ -102,6 +102,16 @@ func addPackSizeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if the pack size already exists
+	for _, size := range packSizes {
+		if size == packSize {
+			response := Response{Message: "Pack size already exists"}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+	}
+
 	fmt.Println("Adding pack size:", packSize)
 	packSizes = append(packSizes, packSize)
 	sort.Slice(packSizes, func(i, j int) bool {
