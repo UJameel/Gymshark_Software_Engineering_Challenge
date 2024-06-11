@@ -24,6 +24,10 @@ type Pack struct {
 	Count int `json:"count"`
 }
 
+type Response struct {
+	Message string `json:"message"`
+}
+
 var packSizes []int
 
 func main() {
@@ -87,55 +91,72 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func addPackSizeHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
-		return
-	}
+	fmt.Println("Received request to add pack size")
+	packSizeStr := r.FormValue("packSize")
+	fmt.Println("Form value packSize:", packSizeStr)
 
-	packSize, err := strconv.Atoi(r.FormValue("packSize"))
+	packSize, err := strconv.Atoi(packSizeStr)
 	if err != nil {
+		fmt.Println("Invalid pack size:", packSizeStr)
 		http.Error(w, "Invalid pack size", http.StatusBadRequest)
 		return
 	}
 
+	fmt.Println("Adding pack size:", packSize)
 	packSizes = append(packSizes, packSize)
 	sort.Slice(packSizes, func(i, j int) bool {
 		return packSizes[i] > packSizes[j]
 	})
 
 	if err := saveConfig(); err != nil {
+		fmt.Println("Error saving config:", err)
 		http.Error(w, "Error saving config", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	response := Response{Message: "Pack size added successfully"}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func removePackSizeHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
-		return
-	}
+	fmt.Println("Received request to remove pack size")
+	packSizeStr := r.FormValue("packSize")
+	fmt.Println("Form value packSize:", packSizeStr)
 
-	packSize, err := strconv.Atoi(r.FormValue("packSize"))
+	packSize, err := strconv.Atoi(packSizeStr)
 	if err != nil {
+		fmt.Println("Invalid pack size:", packSizeStr)
 		http.Error(w, "Invalid pack size", http.StatusBadRequest)
 		return
 	}
 
+	fmt.Println("Removing pack size:", packSize)
+	found := false
 	for i, size := range packSizes {
 		if size == packSize {
 			packSizes = append(packSizes[:i], packSizes[i+1:]...)
+			found = true
 			break
 		}
 	}
 
+	if !found {
+		response := Response{Message: "Pack size not found"}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	if err := saveConfig(); err != nil {
+		fmt.Println("Error saving config:", err)
 		http.Error(w, "Error saving config", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	response := Response{Message: "Pack size removed successfully"}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func calculatePacksHandler(w http.ResponseWriter, r *http.Request) {

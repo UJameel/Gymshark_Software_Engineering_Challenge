@@ -4,6 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pack Calculator App</title>
+    <style>
+        #notification {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #f4f4f4;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        #notification .close-btn {
+            display: block;
+            text-align: right;
+            margin-top: 10px;
+        }
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 500;
+        }
+    </style>
+    <script>
+        function showNotification(message) {
+            var notification = document.getElementById("notification");
+            var overlay = document.getElementById("overlay");
+            notification.innerHTML = message + '<div class="close-btn"><button onclick="hideNotification()">Close</button></div>';
+            notification.style.display = "block";
+            overlay.style.display = "block";
+        }
+
+        function hideNotification() {
+            var notification = document.getElementById("notification");
+            var overlay = document.getElementById("overlay");
+            notification.style.display = "none";
+            overlay.style.display = "none";
+        }
+
+        function handleResponse(response, action) {
+            if (response.message) {
+                showNotification(response.message);
+            }
+            if (action === 'add' && response.message === "Pack size added successfully") {
+                updatePackSizesList();
+            }
+            if (action === 'remove' && response.message === "Pack size removed successfully") {
+                updatePackSizesList();
+            }
+        }
+
+        function handleSubmit(form, event, action) {
+            event.preventDefault();
+            var formData = new FormData(form);
+            fetch(form.action, {
+                method: form.method,
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => handleResponse(data, action))
+            .catch(error => console.error('Error:', error));
+            return false;
+        }
+
+        function updatePackSizesList() {
+            fetch('/')
+                .then(response => response.text())
+                .then(html => {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    var newList = doc.querySelector('ul').innerHTML;
+                    document.querySelector('ul').innerHTML = newList;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
 </head>
 <body>
     <h1>Pack Calculator App</h1>
@@ -14,14 +95,17 @@
         {{end}}
     </ul>
 
+    <div id="overlay"></div>
+    <div id="notification"></div>
+
     <h2>Add Pack Size</h2>
-    <form action="/add-pack-size" method="post">
+    <form action="/add-pack-size" method="post" onsubmit="return handleSubmit(this, event, 'add')">
         <input type="number" name="packSize" required>
         <button type="submit">Add Pack Size</button>
     </form>
 
     <h2>Remove Pack Size</h2>
-    <form action="/remove-pack-size" method="post">
+    <form action="/remove-pack-size" method="post" onsubmit="return handleSubmit(this, event, 'remove')">
         <input type="number" name="packSize" required>
         <button type="submit">Remove Pack Size</button>
     </form>
