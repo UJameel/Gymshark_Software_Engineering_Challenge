@@ -48,15 +48,17 @@
             overlay.style.display = "none";
         }
 
-        function handleResponse(response, action) {
+        function handleResponse(response, action, form) {
             if (response.message) {
                 showNotification(response.message);
             }
             if (action === 'add' && response.message === "Pack size added successfully") {
                 updatePackSizesList();
+                form.reset();
             }
             if (action === 'remove' && response.message === "Pack size removed successfully") {
                 updatePackSizesList();
+                form.reset();
             }
         }
 
@@ -68,7 +70,7 @@
                 body: formData
             })
             .then(response => response.json())
-            .then(data => handleResponse(data, action))
+            .then(data => handleResponse(data, action, form))
             .catch(error => console.error('Error:', error));
             return false;
         }
