@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pack Calculator App</title>
+</head>
+<body>
+    <h1>Pack Calculator App</h1>
+    <h2>Current Pack Sizes</h2>
+    <ul>
+        {{range .PackSizes}}
+        <li>{{.}}</li>
+        {{end}}
+    </ul>
+
+    <h2>Add Pack Size</h2>
+    <form action="/add-pack-size" method="post">
+        <input type="number" name="packSize" required>
+        <button type="submit">Add Pack Size</button>
+    </form>
+
+    <h2>Remove Pack Size</h2>
+    <form action="/remove-pack-size" method="post">
+        <input type="number" name="packSize" required>
+        <button type="submit">Remove Pack Size</button>
+    </form>
+</body>
+</html>

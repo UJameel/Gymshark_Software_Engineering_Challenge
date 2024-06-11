@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 )
 
 type Config struct {
@@ -27,6 +29,9 @@ var packSizes []int
 func main() {
 	loadConfig()
 
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/add-pack-size", addPackSizeHandler)
+	http.HandleFunc("/remove-pack-size", removePackSizeHandler)
 	http.HandleFunc("/calculate-packs", calculatePacksHandler)
 	fmt.Println("Server started at :8080")
 	http.ListenAndServe(":8080", nil)
@@ -53,6 +58,84 @@ func loadConfig() {
 		fmt.Println("No pack sizes defined in config file")
 		os.Exit(1)
 	}
+}
+
+func saveConfig() error {
+	config := Config{PackSizes: packSizes}
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile("packSizeConfig.json", data, 0644)
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		PackSizes []int
+	}{
+		PackSizes: packSizes,
+	}
+
+	tmpl.Execute(w, data)
+}
+
+func addPackSizeHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	packSize, err := strconv.Atoi(r.FormValue("packSize"))
+	if err != nil {
+		http.Error(w, "Invalid pack size", http.StatusBadRequest)
+		return
+	}
+
+	packSizes = append(packSizes, packSize)
+	sort.Slice(packSizes, func(i, j int) bool {
+		return packSizes[i] > packSizes[j]
+	})
+
+	if err := saveConfig(); err != nil {
+		http.Error(w, "Error saving config", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func removePackSizeHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	packSize, err := strconv.Atoi(r.FormValue("packSize"))
+	if err != nil {
+		http.Error(w, "Invalid pack size", http.StatusBadRequest)
+		return
+	}
+
+	for i, size := range packSizes {
+		if size == packSize {
+			packSizes = append(packSizes[:i], packSizes[i+1:]...)
+			break
+		}
+	}
+
+	if err := saveConfig(); err != nil {
+		http.Error(w, "Error saving config", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func calculatePacksHandler(w http.ResponseWriter, r *http.Request) {
