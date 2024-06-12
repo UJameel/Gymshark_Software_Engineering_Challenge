@@ -1,11 +1,9 @@
-package handler
+package main
 
 import (
-	"embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -37,7 +35,7 @@ func init() {
 	loadConfig()
 }
 
-func Handler() {
+func main() {
 	http.HandleFunc("/", IndexHandler)
 	http.HandleFunc("/add-pack-size", AddPackSizeHandler)
 	http.HandleFunc("/remove-pack-size", RemovePackSizeHandler)
@@ -79,13 +77,9 @@ func saveConfig() error {
 	return ioutil.WriteFile("packSizeConfig.json", data, 0644)
 }
 
-//go:embed index.html
-var content embed.FS
-
 // IndexHandler handles the index route
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	tmplFile, _ := fs.ReadFile(content, "index.html")
-	tmpl, err := template.New("index").Parse(string(tmplFile))
+	tmpl, err := template.ParseFiles("index.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
