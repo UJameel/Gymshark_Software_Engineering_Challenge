@@ -31,13 +31,15 @@ type Response struct {
 
 var packSizes []int
 
-func main() {
+func init() {
 	loadConfig()
+}
 
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/add-pack-size", addPackSizeHandler)
-	http.HandleFunc("/remove-pack-size", removePackSizeHandler)
-	http.HandleFunc("/calculate-packs", calculatePacksHandler)
+func main() {
+	http.HandleFunc("/", IndexHandler)
+	http.HandleFunc("/add-pack-size", AddPackSizeHandler)
+	http.HandleFunc("/remove-pack-size", RemovePackSizeHandler)
+	http.HandleFunc("/calculate-packs", CalculatePacksHandler)
 	fmt.Println("Server started at :8080")
 	http.ListenAndServe(":8080", nil)
 }
@@ -75,7 +77,8 @@ func saveConfig() error {
 	return ioutil.WriteFile("packSizeConfig.json", data, 0644)
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
+// IndexHandler handles the index route
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("index.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -91,7 +94,8 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-func addPackSizeHandler(w http.ResponseWriter, r *http.Request) {
+// AddPackSizeHandler handles adding a pack size
+func AddPackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received request to add pack size")
 	packSizeStr := r.FormValue("packSize")
 	fmt.Println("Form value packSize:", packSizeStr)
@@ -130,7 +134,8 @@ func addPackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func removePackSizeHandler(w http.ResponseWriter, r *http.Request) {
+// RemovePackSizeHandler handles removing a pack size
+func RemovePackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received request to remove pack size")
 	packSizeStr := r.FormValue("packSize")
 	fmt.Println("Form value packSize:", packSizeStr)
@@ -170,7 +175,8 @@ func removePackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func calculatePacksHandler(w http.ResponseWriter, r *http.Request) {
+// CalculatePacksHandler handles calculating packs
+func CalculatePacksHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received request to calculate packs")
 	err := r.ParseForm()
 	if err != nil {
