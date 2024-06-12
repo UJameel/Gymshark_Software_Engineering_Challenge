@@ -26,6 +26,7 @@ type Pack struct {
 
 type Response struct {
 	Message string `json:"message"`
+	Packs   []Pack `json:"packs,omitempty"`
 }
 
 var packSizes []int
@@ -170,17 +171,43 @@ func removePackSizeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func calculatePacksHandler(w http.ResponseWriter, r *http.Request) {
-	var order Order
-	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	fmt.Println("Received request to calculate packs")
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println("Error parsing form:", err)
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
+	itemsOrderedStr := r.PostFormValue("itemsOrdered")
+	fmt.Println("PostForm value itemsOrdered:", itemsOrderedStr)
+
+	if itemsOrderedStr == "" {
+		fmt.Println("itemsOrderedStr is empty")
+		http.Error(w, "Invalid number of items", http.StatusBadRequest)
+		return
+	}
+
+	var order Order
+	order.ItemsOrdered, err = strconv.Atoi(itemsOrderedStr)
+	if err != nil {
+		fmt.Println("Error converting itemsOrderedStr to integer:", err)
+		http.Error(w, "Invalid number of items", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("Calculating packs for:", order.ItemsOrdered)
 	packs := calculatePacks(order.ItemsOrdered)
-	optimizedPacks := optimizePacks(packs)
+	response := Response{
+		Message: "Calculation successful",
+		Packs:   packs,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(optimizedPacks)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		fmt.Println("Error encoding response:", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+	}
 }
 
 func calculatePacks(itemsOrdered int) []Pack {
@@ -208,7 +235,8 @@ func calculatePacks(itemsOrdered int) []Pack {
 		packs = append(packs, Pack{Size: smallestPack, Count: 1})
 	}
 
-	return packs
+	// Optimize the packs
+	return optimizePacks(packs)
 }
 
 func optimizePacks(packs []Pack) []Pack {
@@ -217,6 +245,32 @@ func optimizePacks(packs []Pack) []Pack {
 		totalItems += pack.Size * pack.Count
 	}
 
-	// Recalculate the packs to see if we can optimize
-	return calculatePacks(totalItems)
+	fmt.Println("Total items for optimization:", totalItems)
+
+	// Recalculate the packs to see if we can optimize without recursion
+	optPacks := []Pack{}
+	remainingItems := totalItems
+
+	for _, size := range packSizes {
+		if remainingItems == 0 {
+			break
+		}
+		if remainingItems >= size {
+			count := remainingItems / size
+			optPacks = append(optPacks, Pack{Size: size, Count: count})
+			remainingItems %= size
+		}
+	}
+
+	// If there are any remaining items, use the smallest pack to cover the remainder
+	if remainingItems > 0 {
+		smallestPack := packSizes[len(packSizes)-1]
+		optPacks = append(optPacks, Pack{Size: smallestPack, Count: 1})
+	}
+
+	// Return the more optimal solution
+	if len(optPacks) < len(packs) {
+		return optPacks
+	}
+	return packs
 }
