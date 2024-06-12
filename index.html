@@ -3,8 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pack Calculator App</title>
+    <title>PACK CALCULATOR APP</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        li {
+            background: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        form {
+            margin-bottom: 15px;
+        }
+
+        input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #c0392b;
+        }
+
+        .form-inline {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px; /* Increased spacing between forms and next section */
+        }
+
+        .form-inline form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-right: 10px;
+        }
+
+        .form-inline form:last-child {
+            margin-right: 0;
+        }
+
         #notification {
             display: none;
             padding: 20px;
@@ -16,11 +107,13 @@
             transform: translate(-50%, -50%);
             z-index: 1000;
         }
+
         #notification .close-btn {
             display: block;
             text-align: right;
             margin-top: 10px;
         }
+
         #overlay {
             display: none;
             position: fixed;
@@ -30,6 +123,14 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             z-index: 500;
+        }
+
+        .spacer {
+            margin-bottom: 30px; /* Added for additional spacing */
+        }
+
+        .result-spacer {
+            margin-top: 30px; /* Increased space between result and button above */
         }
     </style>
     <script>
@@ -118,39 +219,42 @@
             });
             resultHtml += "</ul>";
             resultDiv.innerHTML = resultHtml;
+            resultDiv.classList.add("result-spacer");
         }
     </script>
 </head>
 <body>
-    <h1>Pack Calculator App</h1>
-    <h2>Current Pack Sizes</h2>
-    <ul>
-        {{range .PackSizes}}
-        <li>{{.}}</li>
-        {{end}}
-    </ul>
+    <div class="container">
+        <h1>PACK CALCULATOR APP</h1>
+        <h2>Current Pack Sizes</h2>
+        <ul>
+            {{range .PackSizes}}
+            <li>{{.}}</li>
+            {{end}}
+        </ul>
 
-    <div id="overlay"></div>
-    <div id="notification"></div>
+        <div id="overlay"></div>
+        <div id="notification"></div>
 
-    <h2>Add Pack Size</h2>
-    <form action="/add-pack-size" method="post" onsubmit="return handleSubmit(this, event, 'add')">
-        <input type="number" name="packSize" required>
-        <button type="submit">Add Pack Size</button>
-    </form>
+        <div class="form-inline">
+            <form action="/add-pack-size" method="post" onsubmit="return handleSubmit(this, event, 'add')">
+                <input type="number" name="packSize" required placeholder="Enter pack size">
+                <button type="submit">Add Pack Size</button>
+            </form>
 
-    <h2>Remove Pack Size</h2>
-    <form action="/remove-pack-size" method="post" onsubmit="return handleSubmit(this, event, 'remove')">
-        <input type="number" name="packSize" required>
-        <button type="submit">Remove Pack Size</button>
-    </form>
+            <form action="/remove-pack-size" method="post" onsubmit="return handleSubmit(this, event, 'remove')">
+                <input type="number" name="packSize" required placeholder="Enter pack size">
+                <button type="submit">Remove Pack Size</button>
+            </form>
+        </div>
 
-    <h2>Calculate Packs</h2>
-    <form action="/calculate-packs" method="post" onsubmit="return handleSubmit(this, event, 'calculate')">
-        <input type="number" name="itemsOrdered" required>
-        <button type="submit">Calculate</button>
-    </form>
+        <h2 style="margin-top: 30px;">Calculate Packs</h2>
+        <form action="/calculate-packs" method="post" onsubmit="return handleSubmit(this, event, 'calculate')">
+            <input type="number" name="itemsOrdered" required placeholder="Enter items ordered">
+            <button type="submit" style="width: 100%;">Calculate</button>
+        </form>
 
-    <div id="calculation-result"></div>
+        <div id="calculation-result"></div>
+    </div>
 </body>
 </html>
