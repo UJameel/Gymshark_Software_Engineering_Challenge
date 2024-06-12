@@ -171,6 +171,13 @@
             event.preventDefault();
             console.log('Submitting form for action:', action);
 
+            // Validate input value
+            var input = form.querySelector('input[type="number"]');
+            if (input.value <= 0) {
+                showNotification('Please enter a value greater than 0.');
+                return false;
+            }
+
             var formData = new FormData(form);
             var urlEncodedData = new URLSearchParams(formData).toString();
             console.log('Form data object:', formData);
