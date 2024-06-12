@@ -60,7 +60,8 @@
                 updatePackSizesList();
             }
             if (action === 'calculate' && response.packs) {
-                displayCalculationResult(response.packs);
+                const itemsOrdered = form.elements["itemsOrdered"].value;
+                displayCalculationResult(response.packs, itemsOrdered);
             }
             form.reset(); // Always reset the form
         }
@@ -109,15 +110,15 @@
                 .catch(error => console.error('Error:', error));
         }
 
-        function displayCalculationResult(packs) {
+        function displayCalculationResult(packs, itemsOrdered) {
             var resultDiv = document.getElementById("calculation-result");
-            var resultHtml = "<h2>Calculation Result</h2><ul>";
+            var resultHtml = "<h2>Calculation Result For " + itemsOrdered + "</h2><ul>";
             packs.forEach(pack => {
                 resultHtml += "<li>" + pack.count + " x " + pack.size + "</li>";
             });
             resultHtml += "</ul>";
             resultDiv.innerHTML = resultHtml;
-    }
+        }
     </script>
 </head>
 <body>
