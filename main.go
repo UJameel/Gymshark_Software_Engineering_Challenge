@@ -31,17 +31,20 @@ type Response struct {
 
 var packSizes []int
 
-func init() {
-	loadConfig()
-}
-
 func main() {
-	http.HandleFunc("/", IndexHandler)
-	http.HandleFunc("/add-pack-size", AddPackSizeHandler)
-	http.HandleFunc("/remove-pack-size", RemovePackSizeHandler)
-	http.HandleFunc("/calculate-packs", CalculatePacksHandler)
-	fmt.Println("Server started at :8080")
-	http.ListenAndServe(":8080", nil)
+	loadConfig()
+
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/add-pack-size", addPackSizeHandler)
+	http.HandleFunc("/remove-pack-size", removePackSizeHandler)
+	http.HandleFunc("/calculate-packs", calculatePacksHandler)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default port if not specified
+	}
+	fmt.Println("Server started at :" + port)
+	http.ListenAndServe(":"+port, nil)
 }
 
 func loadConfig() {
@@ -77,8 +80,7 @@ func saveConfig() error {
 	return ioutil.WriteFile("packSizeConfig.json", data, 0644)
 }
 
-// IndexHandler handles the index route
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
+func indexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("index.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,8 +96,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-// AddPackSizeHandler handles adding a pack size
-func AddPackSizeHandler(w http.ResponseWriter, r *http.Request) {
+func addPackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received request to add pack size")
 	packSizeStr := r.FormValue("packSize")
 	fmt.Println("Form value packSize:", packSizeStr)
@@ -107,7 +108,6 @@ func AddPackSizeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the pack size already exists
 	for _, size := range packSizes {
 		if size == packSize {
 			response := Response{Message: "Pack size already exists"}
@@ -134,8 +134,7 @@ func AddPackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// RemovePackSizeHandler handles removing a pack size
-func RemovePackSizeHandler(w http.ResponseWriter, r *http.Request) {
+func removePackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received request to remove pack size")
 	packSizeStr := r.FormValue("packSize")
 	fmt.Println("Form value packSize:", packSizeStr)
@@ -175,8 +174,7 @@ func RemovePackSizeHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// CalculatePacksHandler handles calculating packs
-func CalculatePacksHandler(w http.ResponseWriter, r *http.Request) {
+func calculatePacksHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received request to calculate packs")
 	err := r.ParseForm()
 	if err != nil {
@@ -235,13 +233,11 @@ func calculatePacks(itemsOrdered int) []Pack {
 		}
 	}
 
-	// If there are any remaining items, use the smallest pack to cover the remainder
 	if remainingItems > 0 {
 		smallestPack := packSizes[len(packSizes)-1]
 		packs = append(packs, Pack{Size: smallestPack, Count: 1})
 	}
 
-	// Optimize the packs
 	return optimizePacks(packs)
 }
 
@@ -253,7 +249,6 @@ func optimizePacks(packs []Pack) []Pack {
 
 	fmt.Println("Total items for optimization:", totalItems)
 
-	// Recalculate the packs to see if we can optimize without recursion
 	optPacks := []Pack{}
 	remainingItems := totalItems
 
@@ -268,13 +263,11 @@ func optimizePacks(packs []Pack) []Pack {
 		}
 	}
 
-	// If there are any remaining items, use the smallest pack to cover the remainder
 	if remainingItems > 0 {
 		smallestPack := packSizes[len(packSizes)-1]
 		optPacks = append(optPacks, Pack{Size: smallestPack, Count: 1})
 	}
 
-	// Return the more optimal solution
 	if len(optPacks) < len(packs) {
 		return optPacks
 	}
